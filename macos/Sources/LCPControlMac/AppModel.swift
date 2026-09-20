@@ -88,7 +88,9 @@ final class AppModel: ObservableObject {
 
     func navigationDidFail(_ message: String) {
         isPageLoading = false
-        pageLoadError = message
+        if pageLoadError == nil {
+            pageLoadError = message
+        }
     }
 
     func webContentProcessDidTerminate() {

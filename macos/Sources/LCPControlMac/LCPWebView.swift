@@ -21,6 +21,7 @@ struct LCPWebView: NSViewRepresentable {
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = contentController
+        configuration.websiteDataStore = .nonPersistent()
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -60,6 +61,10 @@ struct LCPWebView: NSViewRepresentable {
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             reportNavigationFailure(error)
+        }
+
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            model?.webContentProcessDidTerminate()
         }
 
         func webView(

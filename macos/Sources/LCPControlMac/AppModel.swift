@@ -62,7 +62,8 @@ final class AppModel: ObservableObject {
         window.minSize = .zero
         window.isReleasedWhenClosed = false
 
-        if !window.setFrameUsingName(Self.windowFrameAutosaveName) {
+        let restoredFrame = window.setFrameUsingName(Self.windowFrameAutosaveName)
+        if !restoredFrame || !Self.isUsablyVisible(window.frame) {
             window.setContentSize(NSSize(width: 900, height: 900))
             window.center()
         }
@@ -88,6 +89,11 @@ final class AppModel: ObservableObject {
     func navigationDidFail(_ message: String) {
         isPageLoading = false
         pageLoadError = message
+    }
+
+    func webContentProcessDidTerminate() {
+        isPageLoading = false
+        pageLoadError = "The embedded web content process stopped unexpectedly. Retry to start it again."
     }
 
     func openInDefaultBrowser() {
@@ -126,6 +132,18 @@ final class AppModel: ObservableObject {
 
     private var windowTitle: String {
         isAlwaysOnTop ? "LCP Collection Control (Always on Top)" : "LCP Collection Control"
+    }
+
+    /// Window autosave data may outlive a monitor change. Do not restore a
+    /// frame that is almost entirely outside every connected display.
+    private static func isUsablyVisible(_ frame: NSRect) -> Bool {
+        let visibleArea = NSScreen.screens.reduce(CGFloat.zero) { result, screen in
+            let intersection = frame.intersection(screen.visibleFrame)
+            guard !intersection.isNull else { return result }
+            return result + intersection.width * intersection.height
+        }
+        let frameArea = frame.width * frame.height
+        return frameArea > 0 && visibleArea / frameArea >= 0.35
     }
 
     static func normalizedURL(from rawValue: String) throws -> URL {

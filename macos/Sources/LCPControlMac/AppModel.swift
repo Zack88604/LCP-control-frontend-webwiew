@@ -15,7 +15,7 @@ final class AppModel: ObservableObject {
     static let defaultFrontendAddress = "http://192.168.50.32:5174/data-collection"
 
     private static let savedFrontendAddressKey = "frontendAddress"
-    private static let windowFrameAutosaveName = "LCPControlWindow"
+    private nonisolated static let savedWindowFrameKey = "windowFrame"
 
     @Published private(set) var frontendURL: URL
     @Published var isAddressEditorPresented = false
@@ -62,13 +62,18 @@ final class AppModel: ObservableObject {
         window.minSize = .zero
         window.isReleasedWhenClosed = false
 
-        let restoredFrame = window.setFrameUsingName(Self.windowFrameAutosaveName)
-        if !restoredFrame || !Self.isUsablyVisible(window.frame) {
+        if let savedFrame = Self.savedWindowFrame(), Self.isUsablyVisible(savedFrame) {
+            window.setFrame(savedFrame, display: false)
+        } else {
             window.setContentSize(NSSize(width: 900, height: 900))
             window.center()
         }
-        window.setFrameAutosaveName(Self.windowFrameAutosaveName)
         applyAlwaysOnTop()
+    }
+
+    nonisolated static func saveWindowFrame(_ frame: NSRect) {
+        guard frame.width > 0, frame.height > 0 else { return }
+        UserDefaults.standard.set(NSStringFromRect(frame), forKey: savedWindowFrameKey)
     }
 
     func reload() {
@@ -146,6 +151,15 @@ final class AppModel: ObservableObject {
         }
         let frameArea = frame.width * frame.height
         return frameArea > 0 && visibleArea / frameArea >= 0.35
+    }
+
+    private static func savedWindowFrame() -> NSRect? {
+        guard let encodedFrame = UserDefaults.standard.string(forKey: savedWindowFrameKey) else {
+            return nil
+        }
+        let frame = NSRectFromString(encodedFrame)
+        guard frame.width > 0, frame.height > 0 else { return nil }
+        return frame
     }
 
     static func normalizedURL(from rawValue: String) throws -> URL {

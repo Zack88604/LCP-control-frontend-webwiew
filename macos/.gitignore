@@ -1,4 +1,3 @@
-bin/
-obj/
+.build/
 release/
 .DS_Store

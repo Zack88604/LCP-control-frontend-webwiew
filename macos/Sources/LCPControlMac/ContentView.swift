@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -6,12 +7,63 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             LCPWebView(model: model)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
             WindowConfigurator(model: model)
                 .frame(width: 0, height: 0)
+
+            if model.isPageLoading {
+                ProgressView("Loading collection control…")
+                    .padding(18)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    .cornerRadius(10)
+                    .shadow(radius: 4)
+                    .allowsHitTesting(false)
+            }
+
+            if let error = model.pageLoadError {
+                PageLoadErrorView(model: model, error: error)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(isPresented: $model.isAddressEditorPresented) {
             FrontendAddressSheet(model: model)
         }
+    }
+}
+
+private struct PageLoadErrorView: View {
+    @ObservedObject var model: AppModel
+    let error: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Unable to load the collection page")
+                .font(.headline)
+
+            Text(model.frontendURL.absoluteString)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Text(error)
+                .font(.caption)
+                .foregroundColor(.red)
+
+            HStack {
+                Button("Retry") {
+                    model.reload()
+                }
+                Button("Open in Default Browser") {
+                    model.openInDefaultBrowser()
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: 520, alignment: .leading)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .cornerRadius(10)
+        .shadow(radius: 6)
+        .padding(24)
     }
 }
 

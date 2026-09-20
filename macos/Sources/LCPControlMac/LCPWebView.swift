@@ -41,8 +41,25 @@ struct LCPWebView: NSViewRepresentable {
             self.model = model
         }
 
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            model?.navigationDidStart()
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            model?.navigationDidFinish()
             webView.evaluateJavaScript(ControlOnlyScript.source)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            didFailProvisionalNavigation navigation: WKNavigation!,
+            withError error: Error
+        ) {
+            reportNavigationFailure(error)
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            reportNavigationFailure(error)
         }
 
         func webView(
@@ -68,6 +85,10 @@ struct LCPWebView: NSViewRepresentable {
                 NSWorkspace.shared.open(url)
             }
             return nil
+        }
+
+        private func reportNavigationFailure(_ error: Error) {
+            model?.navigationDidFail(error.localizedDescription)
         }
     }
 }

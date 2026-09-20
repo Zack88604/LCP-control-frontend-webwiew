@@ -45,6 +45,12 @@ For local development without an app bundle:
 swift run
 ```
 
+## Troubleshooting a blank window
+
+Build and open `release/LCP Control.app` when testing HTTP frontend access. The app bundle contains the WebView HTTP exception in `Resources/Info.plist`; `swift run` does not run from that bundle.
+
+If navigation fails, the app displays the frontend URL, the WebKit error, and **Retry** / **Open in Default Browser** actions. This distinguishes a network or HTTP policy failure from a page-rendering issue.
+
 ## Distribution
 
 Distribute the generated ZIP and instruct users to drag `LCP Control.app` to `Applications` before opening it. The unsigned development build may require the user to approve the app in macOS Privacy & Security settings.

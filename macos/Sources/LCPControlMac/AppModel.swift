@@ -20,6 +20,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var frontendURL: URL
     @Published var isAddressEditorPresented = false
     @Published private(set) var isAlwaysOnTop = true
+    @Published private(set) var isPageLoading = true
+    @Published private(set) var pageLoadError: String?
 
     private let environmentOverride: URL?
     private weak var webView: WKWebView?
@@ -69,7 +71,23 @@ final class AppModel: ObservableObject {
     }
 
     func reload() {
+        isPageLoading = true
+        pageLoadError = nil
         webView?.reloadFromOrigin()
+    }
+
+    func navigationDidStart() {
+        isPageLoading = true
+        pageLoadError = nil
+    }
+
+    func navigationDidFinish() {
+        isPageLoading = false
+    }
+
+    func navigationDidFail(_ message: String) {
+        isPageLoading = false
+        pageLoadError = message
     }
 
     func openInDefaultBrowser() {
@@ -96,6 +114,8 @@ final class AppModel: ObservableObject {
     }
 
     private func loadCurrentPage() {
+        isPageLoading = true
+        pageLoadError = nil
         webView?.load(URLRequest(url: frontendURL))
     }
 

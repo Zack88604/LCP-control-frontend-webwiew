@@ -14,7 +14,7 @@ struct LCPWebView: NSViewRepresentable {
         contentController.addUserScript(
             WKUserScript(
                 source: ControlOnlyScript.source,
-                injectionTime: .atDocumentEnd,
+                injectionTime: .atDocumentStart,
                 forMainFrameOnly: true
             )
         )

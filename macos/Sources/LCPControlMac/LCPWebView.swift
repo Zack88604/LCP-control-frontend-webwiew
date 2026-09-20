@@ -21,6 +21,7 @@ struct LCPWebView: NSViewRepresentable {
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = contentController
+        configuration.websiteDataStore = .nonPersistent()
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -60,6 +61,27 @@ struct LCPWebView: NSViewRepresentable {
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             reportNavigationFailure(error)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationResponse: WKNavigationResponse,
+            decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        ) {
+            if let response = navigationResponse.response as? HTTPURLResponse,
+               response.statusCode >= 400 {
+                model?.navigationDidFail(
+                    "The configured network proxy returned HTTP \(response.statusCode) for the internal frontend. " +
+                    "Allow 192.168.50.32:5174 in the proxy or network extension, then retry."
+                )
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
+
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            model?.webContentProcessDidTerminate()
         }
 
         func webView(
